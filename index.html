@@ -461,7 +461,7 @@ function renderNews() {
         const date    = n['日付'] || n['開催時期'] || n.date || '';
         const title   = n['お知らせタイトル'] || n.title || '';
         const content = n['内容'] || n.content || '';
-        const link    = n['詳細リンク'] || n['HPリンク'] || n.link || '';
+        const link    = n['詳細リンク'] || n['HPリンク'] || n.link || n.url || '';
         return `
         <div class="py-2.5 ${i < sorted.length - 1 ? 'border-b border-slate-100' : ''}">
             ${link
