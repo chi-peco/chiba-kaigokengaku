@@ -182,7 +182,7 @@
                 <div id="news-loading" class="text-center py-4">
                     <div class="spinner mx-auto"></div>
                 </div>
-                <div id="news-container" class="overflow-y-auto news-scroll hidden" style="max-height: 200px;"></div>
+                <div id="news-container" class="overflow-y-auto news-scroll hidden" style="max-height: 240px;"></div>
                 <div id="news-empty" class="hidden text-center py-4 text-sm text-slate-400">お知らせはありません</div>
             </div>
         </section>
@@ -452,18 +452,28 @@ function renderNews() {
         return;
     }
 
+    // 新しい順に並び替え
+    const sorted = [...newsData].reverse();
+
     loading.classList.add('hidden');
     container.classList.remove('hidden');
-    container.innerHTML = newsData.map((n, i) => `
-        <div class="py-2 ${i < newsData.length - 1 ? 'border-b border-slate-100' : ''}">
-            <div class="flex items-center justify-between mb-1">
-                <p class="text-xs text-slate-400">${n.date || n['開催時期'] || ''}</p>
-                ${n.link || n['HPリンク'] ? `<a href="${n.link || n['HPリンク']}" target="_blank" class="text-xs text-orange-500 hover:underline">詳しく見る →</a>` : ''}
+    container.innerHTML = sorted.map((n, i) => {
+        const date    = n['日付'] || n['開催時期'] || n.date || '';
+        const title   = n['お知らせタイトル'] || n.title || '';
+        const content = n['内容'] || n.content || '';
+        const link    = n['詳細リンク'] || n['HPリンク'] || n.link || '';
+        return `
+        <div class="py-2.5 ${i < sorted.length - 1 ? 'border-b border-slate-100' : ''}">
+            <div class="flex items-center gap-2 flex-wrap">
+                ${date  ? `<span class="text-xs text-slate-400 flex-shrink-0">${date}</span>` : ''}
+                ${date  ? `<span class="text-xs text-slate-300">|</span>` : ''}
+                <span class="text-sm font-bold text-slate-700">${title}</span>
+                ${content ? `<span class="text-xs text-slate-300">|</span>` : ''}
+                ${content ? `<span class="text-xs text-slate-500">${content}</span>` : ''}
+                ${link ? `<a href="${link}" target="_blank" class="text-xs text-orange-500 hover:underline ml-auto flex-shrink-0">詳しく見る →</a>` : ''}
             </div>
-            <p class="font-bold text-slate-700 text-sm">${n.title || n['お知らせタイトル'] || ''}</p>
-            ${n.content || n['内容'] ? `<p class="text-xs text-slate-500 mt-0.5">${n.content || n['内容']}</p>` : ''}
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // =============================================
