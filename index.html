@@ -225,12 +225,7 @@
                 </button>
                 <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-bold">事業所専用</span>
             </div>
-            <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
-                <p class="text-xs text-orange-700">
-                    <i data-lucide="info" class="w-3.5 h-3.5 inline mr-1"></i>
-                    個人情報保護のため、氏名・電話番号・メールアドレスは表示されません。
-                </p>
-            </div>
+            <p class="text-xs text-slate-400 mb-4">個人情報保護のため、氏名・電話番号・メールアドレスは表示されません。</p>
             <div class="flex items-center gap-2 mb-4">
                 <i data-lucide="users" class="text-orange-400 w-5 h-5"></i>
                 <h2 class="text-lg font-bold text-slate-800">見学希望者リスト</h2>
@@ -535,7 +530,7 @@ function renderFacilities(areaCode) {
 
     const filtered = facilitiesData.filter(f =>
         (f.area || f['エリア'] || '') === areaCode
-    );
+    ).reverse(); // 新しい順（上に表示）
 
     loading.classList.add('hidden');
 
@@ -550,14 +545,12 @@ function renderFacilities(areaCode) {
 }
 
 function buildFacilityCard(f, idx) {
-    const name           = f.name || f['事業所の名称'] || '';
-    const address        = f.address || f['地図で見る'] || '';
-    const tel            = f.tel || f['電話番号'] || '';
-    const message        = f.message || f['事業所からの一言'] || '';
-    const type           = f.type || f['種別'] || '';
-    const welcome        = f.welcome || f['歓迎チェック'] || f['歓迎チェック （複数回答可）'] || '';
-    const hp             = f.hp || f['HP'] || '';
-    const facilityId     = f.id || f['ID'] || '';
+    const name        = f.name || '';
+    const address     = f.mapUrl || '';
+    const welcome     = f.welcome || '';
+    const experience  = f.experience || '';
+    const senior      = f.senior || '';
+    const facilityId  = f.id || '';
     const applicationUrl = buildApplicationUrl(facilityId, name);
 
     const welcomeTags = typeof welcome === 'string'
@@ -569,39 +562,30 @@ function buildFacilityCard(f, idx) {
         <div class="p-5">
             <h4 class="font-bold text-slate-800 text-lg mb-2">${name}</h4>
 
+            ${address ? `
+            <p class="text-sm text-slate-600 flex items-start gap-1 mb-2">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-orange-400"></i>
+                <span>${address}</span>
+            </p>` : ''}
+
             ${welcomeTags.length > 0 ? `
             <div class="flex flex-wrap gap-1.5 mb-2">
-                ${welcomeTags.slice(0, 4).map(tag => `
+                ${welcomeTags.map(tag => `
                     <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">${tag.trim()}</span>
                 `).join('')}
             </div>` : ''}
 
-            ${type ? `<p class="text-xs text-slate-500 mb-2">${type}</p>` : ''}
+            <div class="space-y-1 mb-3">
+                ${experience ? `<p class="text-xs text-slate-500"><span class="text-slate-400">経験: </span>${experience}</p>` : ''}
+                ${senior    ? `<p class="text-xs text-slate-500"><span class="text-slate-400">中高年採用: </span>${senior}</p>` : ''}
+            </div>
 
-            ${address ? `
-            <p class="text-sm text-slate-600 flex items-start gap-1 mb-2">
-                <i data-lucide="map-pin" class="w-3.5 h-3.5 mt-0.5 flex-shrink-0"></i>
-                <span>${address}</span>
-            </p>` : ''}
-
-            ${message ? `
-            <p class="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3">
-                💬 ${message}
-            </p>` : ''}
-
-            <!-- アクションボタン -->
+            <!-- 見学申込ボタン -->
             <div class="bg-slate-50 p-3 rounded-lg">
-                <div class="flex gap-2">
-                    ${tel ? `
-                    <a href="tel:${tel.replace(/-/g, '')}"
-                       class="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2.5 rounded-lg text-center flex items-center justify-center gap-1.5 transition-colors">
-                        <i data-lucide="phone" class="w-4 h-4"></i> 電話で申込
-                    </a>` : ''}
-                    <a href="${applicationUrl}" target="_blank"
-                       class="flex-1 bg-white hover:bg-slate-100 text-slate-700 text-sm font-bold py-2.5 rounded-lg border border-slate-200 text-center flex items-center justify-center gap-1.5 transition-colors">
-                        <i data-lucide="mail" class="w-4 h-4"></i> 見学申込
-                    </a>
-                </div>
+                <a href="${applicationUrl}" target="_blank"
+                   class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2.5 rounded-lg text-center flex items-center justify-center gap-1.5 transition-colors">
+                    <i data-lucide="mail" class="w-4 h-4"></i> 見学申込
+                </a>
             </div>
 
             <!-- 詳細表示 -->
@@ -612,16 +596,7 @@ function buildFacilityCard(f, idx) {
             </button>
 
             <!-- 詳細エリア -->
-            <div id="detail-${idx}" class="hidden mt-3 border-t border-slate-100 pt-3 space-y-2">
-                ${hp && hp !== 'なし' ? `
-                <a href="${hp}" target="_blank"
-                   class="flex items-center gap-1.5 text-sm text-orange-500 hover:underline">
-                    <i data-lucide="globe" class="w-3.5 h-3.5"></i> 公式ホームページ
-                </a>` : ''}
-                ${tel ? `
-                <p class="text-sm text-slate-600 flex items-center gap-1.5">
-                    <i data-lucide="phone" class="w-3.5 h-3.5"></i> ${tel}
-                </p>` : ''}
+            <div id="detail-${idx}" class="hidden mt-3 border-t border-slate-100 pt-3">
                 ${buildDetailInfo(f)}
             </div>
         </div>
@@ -629,22 +604,32 @@ function buildFacilityCard(f, idx) {
 }
 
 function buildDetailInfo(f) {
-    const rows = [
-        { key: '介護の仕事経験', label: '経験' },
-        { key: '雇用形態', label: '雇用形態' },
-        { key: '募集の日数（週）', label: '日数/週' },
-        { key: '募集の時間数（日）', label: '時間数/日' },
-        { key: '募集の時間', label: '時間帯' },
-        { key: '中高年世代の採用', label: '中高年採用' },
-    ];
-    const items = rows
-        .map(r => {
-            const v = f[r.key] || f[r.key.toLowerCase()] || '';
-            return v ? `<p class="text-xs text-slate-500"><span class="text-slate-400">${r.label}: </span>${v}</p>` : '';
-        })
-        .filter(Boolean)
-        .join('');
-    return items ? `<div class="space-y-1">${items}</div>` : '';
+    const target      = f.target || '';
+    const employment  = f.employment || '';
+    const daysPerWeek = f.daysPerWeek || '';
+    const hoursPerDay = f.hoursPerDay || '';
+    const workHours   = f.workHours || '';
+    const staff       = f.staff || '';
+    const phone       = f.phone || '';
+    const internship  = f.internship || '';
+    const comment     = f.comment || '';
+    const mapUrl      = f.mapUrl || '';
+    const hp          = f.hp || '';
+
+    let html = '<div class="space-y-2">';
+    if (target)      html += `<p class="text-xs text-slate-600"><span class="text-slate-400">受入対象者: </span>${target}</p>`;
+    if (employment)  html += `<p class="text-xs text-slate-600"><span class="text-slate-400">雇用形態: </span>${employment}</p>`;
+    if (daysPerWeek) html += `<p class="text-xs text-slate-600"><span class="text-slate-400">募集日数: </span>${daysPerWeek}</p>`;
+    if (hoursPerDay) html += `<p class="text-xs text-slate-600"><span class="text-slate-400">時間数/日: </span>${hoursPerDay}</p>`;
+    if (workHours)   html += `<p class="text-xs text-slate-600"><span class="text-slate-400">時間帯: </span>${workHours}</p>`;
+    if (staff)       html += `<p class="text-xs text-slate-600"><span class="text-slate-400">担当者: </span>${staff}</p>`;
+    if (phone)       html += `<a href="tel:${phone.replace(/-/g,'')}" class="text-xs text-slate-600 flex items-center gap-1 hover:text-orange-500"><i data-lucide="phone" class="w-3 h-3"></i>${phone}</a>`;
+    if (internship)  html += `<p class="text-xs text-slate-600"><span class="text-slate-400">職場体験: </span>${internship}</p>`;
+    if (comment)     html += `<p class="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">💬 ${comment}</p>`;
+    if (hp && hp !== 'なし') html += `<a href="${hp}" target="_blank" class="flex items-center gap-1.5 text-sm text-orange-500 hover:underline"><i data-lucide="globe" class="w-3.5 h-3.5"></i>公式HP</a>`;
+    if (mapUrl)      html += `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapUrl)}" target="_blank" class="flex items-center gap-1.5 text-sm text-blue-500 hover:underline"><i data-lucide="map" class="w-3.5 h-3.5"></i>Googleマップで見る</a>`;
+    html += '</div>';
+    return html;
 }
 
 function buildApplicationUrl(facilityId, facilityName) {
@@ -687,22 +672,27 @@ function renderSeekers() {
             return;
         }
         container.classList.remove('hidden');
-        container.innerHTML = seekersData.map((s, idx) => buildSeekerCard(s, idx)).join('');
+        container.innerHTML = [...seekersData].reverse().map((s, idx) => buildSeekerCard(s, idx)).join('');
         lucide.createIcons();
     }, 500);
 }
 
 function buildSeekerCard(s, idx) {
-    const seekerId  = s.id || s['ID'] || '';
-    const age       = s.age || s['年齢'] || '';
-    const gender    = s.gender || s['性別'] || '';
-    const location  = s.location || s['お住まい'] || '';
-    const interest  = s.interest || s['仕事への興味'] || '';
-    const license   = s.license || s['資格'] || '';
-    const workStyle = s.workStyle || s['もし働くなら、どんな働き方？'] || '';
-    const days      = s.days || s['週に何日くらい？'] || '';
-    const hours     = s.hours || s['1日何時間くらい？'] || '';
-    const question  = s.question || s['聞きたいこと・不安なこと'] || '';
+    const seekerId   = s.id || '';
+    const age        = s.age || '';
+    const gender     = s.gender || '';
+    const location   = s.location || '';
+    const currentJob = s.currentJob || '';
+    const interest   = s.interest || '';
+    const license    = s.license || '';
+    const workStyle  = s.workStyle || '';
+    const daysPerWeek = s.daysPerWeek || '';
+    const hoursPerDay = s.hoursPerDay || '';
+    const workHours  = s.workHours || '';
+    const workHoursEnd = s.workHoursEnd || '';
+    const question   = s.question || '';
+
+    const timeRange = workHours && workHoursEnd ? `${workHours}〜${workHoursEnd}` : (workHours || workHoursEnd || '');
 
     return `
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 fade-in">
@@ -720,11 +710,13 @@ function buildSeekerCard(s, idx) {
         </div>
 
         <div class="space-y-1.5 mb-3">
-            ${interest  ? `<p class="text-xs text-slate-600"><span class="text-slate-400">就職への興味: </span>${interest}</p>`  : ''}
-            ${license   ? `<p class="text-xs text-slate-600"><span class="text-slate-400">資格: </span>${license}</p>`   : ''}
-            ${workStyle ? `<p class="text-xs text-slate-600"><span class="text-slate-400">希望雇用形態: </span>${workStyle}</p>` : ''}
-            ${days      ? `<p class="text-xs text-slate-600"><span class="text-slate-400">希望日数: </span>${days}</p>`      : ''}
-            ${hours     ? `<p class="text-xs text-slate-600"><span class="text-slate-400">希望時間: </span>${hours}</p>`     : ''}
+            ${currentJob  ? `<p class="text-xs text-slate-600"><span class="text-slate-400">現在の職業: </span>${currentJob}</p>` : ''}
+            ${interest    ? `<p class="text-xs text-slate-600"><span class="text-slate-400">就職への興味: </span>${interest}</p>` : ''}
+            ${license     ? `<p class="text-xs text-slate-600"><span class="text-slate-400">資格: </span>${license}</p>` : ''}
+            ${workStyle   ? `<p class="text-xs text-slate-600"><span class="text-slate-400">希望雇用形態: </span>${workStyle}</p>` : ''}
+            ${daysPerWeek ? `<p class="text-xs text-slate-600"><span class="text-slate-400">希望日数: </span>${daysPerWeek}</p>` : ''}
+            ${hoursPerDay ? `<p class="text-xs text-slate-600"><span class="text-slate-400">1日の時間: </span>${hoursPerDay}</p>` : ''}
+            ${timeRange   ? `<p class="text-xs text-slate-600"><span class="text-slate-400">希望時間帯: </span>${timeRange}</p>` : ''}
         </div>
 
         ${question ? `
