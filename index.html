@@ -323,9 +323,9 @@ const FORM_APPLICATION_BASE = 'https://docs.google.com/forms/d/e/1FAIpQLSfSX-flb
 const FORM_INVITATION_BASE = 'https://docs.google.com/forms/d/e/1FAIpQLScHk56UviSv-CeLqng7vEp90DFTfe-RM2HmeZAKQDintJfupA/viewform';
 
 // フォームのentry番号（フォームのURLに合わせて変更してください）
-const ENTRY_FACILITY_ID = 'entry.288481092';        // 事業所ID
+const ENTRY_FACILITY_ID = 'entry.591787054';        // 事業所ID
 const ENTRY_FACILITY_NAME = 'entry.494833626';      // 事業所名
-const ENTRY_SEEKER_ID = 'entry.XXXXXXXX';          // 求職者ID（お誘いフォーム）
+const ENTRY_SEEKER_ID = 'entry.2112093822';          // 求職者ID（お誘いフォーム）
 const ENTRY_SEEKER_EMAIL = 'entry.1251070070';       // 求職者メール（申込フォーム）
 
 // エリア定義
@@ -734,13 +734,7 @@ function buildSeekerCard(s, idx) {
 }
 
 function sendInvitation(seekerId, btn) {
-    if (FORM_INVITATION_BASE.includes('INVITATION_FORM_ID')) {
-        alert('お誘いフォームのURLを設定してください（index.htmlのFORM_INVITATION_BASEを更新）');
-        return;
-    }
-    // 事業所IDは実際の運用では事業所ログイン後に保持する想定
-    // ここでは仮でお誘いフォームに遷移
-    const url = `${FORM_INVITATION_BASE}?${ENTRY_SEEKER_ID}=${encodeURIComponent(seekerId)}`;
+    const url = `${FORM_INVITATION_BASE}?${ENTRY_FACILITY_ID}=${encodeURIComponent('F001')}&${ENTRY_SEEKER_ID}=${encodeURIComponent(seekerId)}`;
     window.open(url, '_blank');
 }
 
