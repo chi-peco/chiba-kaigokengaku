@@ -806,14 +806,67 @@ function sendInvitation(seekerId, btn) {
 // =============================================
 // 見学申込モーダル
 // =============================================
+let currentApplyUrl = '';
+
 function showApplyModal(url) {
-    document.getElementById('apply-modal-link').href = url;
+    currentApplyUrl = url;
     document.getElementById('apply-modal').classList.remove('hidden');
+    showApplyStep1();
     lucide.createIcons();
 }
 
 function closeApplyModal() {
     document.getElementById('apply-modal').classList.add('hidden');
+    document.getElementById('apply-email-input').value = '';
+    document.getElementById('apply-email-error').classList.add('hidden');
+}
+
+function showApplyStep1() {
+    document.getElementById('apply-step1').classList.remove('hidden');
+    document.getElementById('apply-step2').classList.add('hidden');
+}
+
+function showApplyStep2() {
+    document.getElementById('apply-step1').classList.add('hidden');
+    document.getElementById('apply-step2').classList.remove('hidden');
+    document.getElementById('apply-email-input').focus();
+}
+
+async function checkAndApply() {
+    const email = document.getElementById('apply-email-input').value.trim();
+    const errorEl = document.getElementById('apply-email-error');
+    const btn = document.getElementById('apply-check-btn');
+
+    if (!email) {
+        errorEl.textContent = 'メールアドレスを入力してください';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    btn.textContent = '確認中...';
+    btn.disabled = true;
+    errorEl.classList.add('hidden');
+
+    try {
+        const res = await fetch(`${API_URL}?type=check_seeker&email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+
+        if (data.found) {
+            // 登録済み → メールアドレスをフォームURLに追加して開く
+            const url = currentApplyUrl + `&${ENTRY_SEEKER_EMAIL}=${encodeURIComponent(email)}`;
+            window.open(url, '_blank');
+            closeApplyModal();
+        } else {
+            errorEl.textContent = '登録が見つかりません。まず見学希望者登録をしてください。';
+            errorEl.classList.remove('hidden');
+        }
+    } catch(e) {
+        errorEl.textContent = '通信エラーが発生しました。もう一度お試しください。';
+        errorEl.classList.remove('hidden');
+    }
+
+    btn.textContent = '確認して申込へ進む';
+    btn.disabled = false;
 }
 
 // =============================================
@@ -832,33 +885,61 @@ document.addEventListener('DOMContentLoaded', async () => {
 <!-- 見学申込モーダル -->
 <div id="apply-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
     <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-        <div class="text-center mb-5">
-            <div class="bg-orange-100 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
-                <i data-lucide="mail" class="w-7 h-7 text-orange-500"></i>
+
+        <!-- STEP1: 選択画面 -->
+        <div id="apply-step1">
+            <div class="text-center mb-5">
+                <div class="bg-orange-100 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="mail" class="w-7 h-7 text-orange-500"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">見学申込</h3>
+                <p class="text-sm text-slate-600">見学希望者登録がお済みですか？</p>
             </div>
-            <h3 class="text-lg font-bold text-slate-800 mb-2">見学申込について</h3>
-            <p class="text-sm text-slate-600">
-                見学申込には、まず<span class="font-bold text-orange-500">見学希望者登録</span>が必要です。
-            </p>
+            <div class="space-y-3">
+                <button onclick="showApplyStep2()"
+                   class="block w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-center text-sm transition-colors">
+                    <i data-lucide="mail" class="w-4 h-4 inline mr-1"></i>
+                    登録済みの方はこちら
+                </button>
+                <a href="https://forms.gle/rJios6qV3xnSgL9b8" target="_blank"
+                   onclick="closeApplyModal()"
+                   class="block w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-center text-sm transition-colors">
+                    <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
+                    まだ登録していない方はこちら
+                </a>
+                <button onclick="closeApplyModal()"
+                        class="block w-full text-slate-400 hover:text-slate-600 py-2 text-sm transition-colors">
+                    キャンセル
+                </button>
+            </div>
         </div>
-        <div class="space-y-3">
-            <a href="https://forms.gle/rJios6qV3xnSgL9b8" target="_blank"
-               onclick="closeApplyModal()"
-               class="block w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-center text-sm transition-colors">
-                <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
-                まだ登録していない方はこちら
-            </a>
-            <a id="apply-modal-link" href="#" target="_blank"
-               onclick="closeApplyModal()"
-               class="block w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-center text-sm transition-colors">
-                <i data-lucide="mail" class="w-4 h-4 inline mr-1"></i>
-                登録済みの方はこちら（見学申込へ）
-            </a>
-            <button onclick="closeApplyModal()"
-                    class="block w-full text-slate-400 hover:text-slate-600 py-2 text-sm transition-colors">
-                キャンセル
-            </button>
+
+        <!-- STEP2: メールアドレス入力・照合 -->
+        <div id="apply-step2" class="hidden">
+            <div class="text-center mb-5">
+                <div class="bg-orange-100 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="at-sign" class="w-7 h-7 text-orange-500"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">メールアドレスを確認</h3>
+                <p class="text-sm text-slate-600">登録時のメールアドレスを入力してください</p>
+            </div>
+            <div class="space-y-3">
+                <input type="email" id="apply-email-input"
+                       placeholder="example@email.com"
+                       class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                <p id="apply-email-error" class="hidden text-xs text-red-500 text-center"></p>
+                <button onclick="checkAndApply()"
+                        id="apply-check-btn"
+                        class="block w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-center text-sm transition-colors">
+                    確認して申込へ進む
+                </button>
+                <button onclick="showApplyStep1()"
+                        class="block w-full text-slate-400 hover:text-slate-600 py-2 text-sm transition-colors">
+                    戻る
+                </button>
+            </div>
         </div>
+
     </div>
 </div>
 
