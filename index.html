@@ -215,8 +215,8 @@
         </div>
     </div>
 
-    <!-- ===== 求職者リスト（事業所向け） ===== -->
-    <div id="page-seekers" class="hidden">
+    <!-- ===== 圏域選択ページ（事業所向け） ===== -->
+    <div id="page-seeker-areas" class="hidden">
         <div class="fade-in">
             <div class="flex items-center justify-between mb-4">
                 <button onclick="showHome()" class="flex items-center gap-2 text-slate-500 hover:text-orange-500 transition-colors">
@@ -228,7 +228,26 @@
             <p class="text-xs text-slate-400 mb-4">個人情報保護のため、氏名・電話番号・メールアドレスは表示されません。</p>
             <div class="flex items-center gap-2 mb-4">
                 <i data-lucide="users" class="text-orange-400 w-5 h-5"></i>
-                <h2 class="text-lg font-bold text-slate-800">見学希望者リスト</h2>
+                <h2 class="text-lg font-bold text-slate-800">圏域から探す</h2>
+            </div>
+            <div id="seeker-area-list" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- ===== 求職者リスト（事業所向け） ===== -->
+    <div id="page-seekers" class="hidden">
+        <div class="fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="showPage('page-seeker-areas')" class="flex items-center gap-2 text-slate-500 hover:text-orange-500 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span class="text-sm">圏域選択に戻る</span>
+                </button>
+                <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-bold">事業所専用</span>
+            </div>
+            <p class="text-xs text-slate-400 mb-4">個人情報保護のため、氏名・電話番号・メールアドレスは表示されません。</p>
+            <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="users" class="text-orange-400 w-5 h-5"></i>
+                <h2 class="text-lg font-bold text-slate-800" id="seeker-area-title">見学希望者リスト</h2>
             </div>
             <div id="seekers-loading" class="text-center py-8">
                 <div class="spinner mx-auto mb-3"></div>
@@ -236,7 +255,7 @@
             </div>
             <div id="seekers-container" class="space-y-4 hidden"></div>
             <div id="seekers-empty" class="hidden text-center py-8 text-sm text-slate-400">
-                現在登録中の見学希望者はいません
+                この圏域の見学希望者はまだ登録されていません
             </div>
         </div>
     </div>
@@ -376,10 +395,46 @@ function showSeekers() {
 function checkPassword() {
     const val = document.getElementById('password-input').value;
     if (val === PASSWORD) {
-        showSeekers();
+        showSeekerAreas();
     } else {
         document.getElementById('login-error').classList.remove('hidden');
     }
+}
+
+function showSeekerAreas() {
+    showPage('page-seeker-areas');
+    renderSeekerAreaList();
+}
+
+function renderSeekerAreaList() {
+    const container = document.getElementById('seeker-area-list');
+    container.innerHTML = areas.map(area => {
+        const count = seekersData.filter(s => {
+            const loc = s.location || '';
+            return area.cities.split('、').some(city => loc.includes(city));
+        }).length;
+        return `
+        <button onclick="showSeekersByArea('${area.code}', '${area.name}')"
+                class="w-full bg-white hover:bg-slate-50 rounded-xl border border-slate-200 p-4 text-left shadow-sm transition-colors">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-bold text-slate-800">${area.name}</p>
+                    <p class="text-xs text-slate-500 mt-0.5">${area.cities.substring(0, 30)}…</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-orange-500 font-bold text-sm">${count}名</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 ml-1 inline"></i>
+                </div>
+            </div>
+        </button>`;
+    }).join('');
+    lucide.createIcons();
+}
+
+function showSeekersByArea(areaCode, areaName) {
+    showPage('page-seekers');
+    document.getElementById('seeker-area-title').textContent = areaName + ' の見学希望者';
+    renderSeekers(areaCode);
 }
 
 // =============================================
@@ -550,6 +605,7 @@ function buildFacilityCard(f, idx) {
     const welcome     = f.welcome || '';
     const experience  = f.experience || '';
     const senior      = f.senior || '';
+    const target      = f.target || '';
     const facilityId  = f.id || '';
     const applicationUrl = buildApplicationUrl(facilityId, name);
 
@@ -577,15 +633,15 @@ function buildFacilityCard(f, idx) {
 
             <div class="space-y-1 mb-3">
                 ${experience ? `<p class="text-xs text-slate-500"><span class="text-slate-400">経験: </span>${experience}</p>` : ''}
-                ${senior    ? `<p class="text-xs text-slate-500"><span class="text-slate-400">中高年採用: </span>${senior}</p>` : ''}
+                ${target    ? `<p class="text-xs text-slate-500"><span class="text-slate-400">受入対象者: </span>${target}</p>` : ''}
             </div>
 
             <!-- 見学申込ボタン -->
             <div class="bg-slate-50 p-3 rounded-lg">
-                <a href="${applicationUrl}" target="_blank"
+                <button onclick="showApplyModal('${applicationUrl}')"
                    class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2.5 rounded-lg text-center flex items-center justify-center gap-1.5 transition-colors">
                     <i data-lucide="mail" class="w-4 h-4"></i> 見学申込
-                </a>
+                </button>
             </div>
 
             <!-- 詳細表示 -->
@@ -617,14 +673,13 @@ function buildDetailInfo(f) {
     const hp          = f.hp || '';
 
     let html = '<div class="space-y-2">';
-    if (target)      html += `<p class="text-xs text-slate-600"><span class="text-slate-400">受入対象者: </span>${target}</p>`;
     if (employment)  html += `<p class="text-xs text-slate-600"><span class="text-slate-400">雇用形態: </span>${employment}</p>`;
     if (daysPerWeek) html += `<p class="text-xs text-slate-600"><span class="text-slate-400">募集日数: </span>${daysPerWeek}</p>`;
     if (hoursPerDay) html += `<p class="text-xs text-slate-600"><span class="text-slate-400">時間数/日: </span>${hoursPerDay}</p>`;
     if (workHours)   html += `<p class="text-xs text-slate-600"><span class="text-slate-400">時間帯: </span>${workHours}</p>`;
-    if (staff)       html += `<p class="text-xs text-slate-600"><span class="text-slate-400">担当者: </span>${staff}</p>`;
     if (phone)       html += `<a href="tel:${phone.replace(/-/g,'')}" class="text-xs text-slate-600 flex items-center gap-1 hover:text-orange-500"><i data-lucide="phone" class="w-3 h-3"></i>${phone}</a>`;
     if (internship)  html += `<p class="text-xs text-slate-600"><span class="text-slate-400">職場体験: </span>${internship}</p>`;
+    if (target)      html += `<p class="text-xs text-slate-600"><span class="text-slate-400">中高年採用: </span>${target}</p>`;
     if (comment)     html += `<p class="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">💬 ${comment}</p>`;
     if (hp && hp !== 'なし') html += `<a href="${hp}" target="_blank" class="flex items-center gap-1.5 text-sm text-orange-500 hover:underline"><i data-lucide="globe" class="w-3.5 h-3.5"></i>公式HP</a>`;
     if (mapUrl)      html += `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapUrl)}" target="_blank" class="flex items-center gap-1.5 text-sm text-blue-500 hover:underline"><i data-lucide="map" class="w-3.5 h-3.5"></i>Googleマップで見る</a>`;
@@ -656,7 +711,7 @@ function toggleDetail(id) {
 // =============================================
 // 求職者リスト描画（事業所向け）
 // =============================================
-function renderSeekers() {
+function renderSeekers(areaCode) {
     const loading   = document.getElementById('seekers-loading');
     const container = document.getElementById('seekers-container');
     const empty     = document.getElementById('seekers-empty');
@@ -667,12 +722,23 @@ function renderSeekers() {
 
     setTimeout(() => {
         loading.classList.add('hidden');
-        if (seekersData.length === 0) {
+
+        // 圏域フィルタ
+        const area = areas.find(a => a.code === areaCode);
+        const cities = area ? area.cities.split('、') : [];
+        const filtered = areaCode
+            ? [...seekersData].filter(s => {
+                const loc = s.location || '';
+                return cities.some(city => loc.includes(city));
+              })
+            : [...seekersData];
+
+        if (filtered.length === 0) {
             empty.classList.remove('hidden');
             return;
         }
         container.classList.remove('hidden');
-        container.innerHTML = [...seekersData].reverse().map((s, idx) => buildSeekerCard(s, idx)).join('');
+        container.innerHTML = [...filtered].reverse().map((s, idx) => buildSeekerCard(s, idx)).join('');
         lucide.createIcons();
     }, 500);
 }
@@ -738,6 +804,19 @@ function sendInvitation(seekerId, btn) {
 }
 
 // =============================================
+// 見学申込モーダル
+// =============================================
+function showApplyModal(url) {
+    document.getElementById('apply-modal-link').href = url;
+    document.getElementById('apply-modal').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function closeApplyModal() {
+    document.getElementById('apply-modal').classList.add('hidden');
+}
+
+// =============================================
 // 初期化
 // =============================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -749,6 +828,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
 });
 </script>
+
+<!-- 見学申込モーダル -->
+<div id="apply-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+        <div class="text-center mb-5">
+            <div class="bg-orange-100 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="mail" class="w-7 h-7 text-orange-500"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">見学申込について</h3>
+            <p class="text-sm text-slate-600">
+                見学申込には、まず<span class="font-bold text-orange-500">見学希望者登録</span>が必要です。
+            </p>
+        </div>
+        <div class="space-y-3">
+            <a href="https://forms.gle/rJios6qV3xnSgL9b8" target="_blank"
+               onclick="closeApplyModal()"
+               class="block w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-center text-sm transition-colors">
+                <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
+                まだ登録していない方はこちら
+            </a>
+            <a id="apply-modal-link" href="#" target="_blank"
+               onclick="closeApplyModal()"
+               class="block w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-center text-sm transition-colors">
+                <i data-lucide="mail" class="w-4 h-4 inline mr-1"></i>
+                登録済みの方はこちら（見学申込へ）
+            </a>
+            <button onclick="closeApplyModal()"
+                    class="block w-full text-slate-400 hover:text-slate-600 py-2 text-sm transition-colors">
+                キャンセル
+            </button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
