@@ -303,7 +303,8 @@ const FORM_FACILITY = 'https://docs.google.com/forms/d/e/1FAIpQLSeEAWz7zHzfhbHSs
 const FORM_APPLICATION_BASE = 'https://docs.google.com/forms/d/e/1FAIpQLSfSX-flbqrAqG0O2Zfl814UM91ZiQuLZfeBcEwiwnsYs9_aPg/viewform';
 const FORM_INVITATION_BASE = 'https://docs.google.com/forms/d/e/1FAIpQLScHk56UviSv-CeLqng7vEp90DFTfe-RM2HmeZAKQDintJfupA/viewform';
 
-const ENTRY_FACILITY_ID = 'entry.288481092';
+const ENTRY_FACILITY_ID = 'entry.288481092';     // 見学申込フォーム用
+const ENTRY_INV_FACILITY_ID = 'entry.591787054'; // お誘いフォーム用
 const ENTRY_FACILITY_NAME = 'entry.494833626';
 const ENTRY_SEEKER_ID = 'entry.2112093822';
 const ENTRY_SEEKER_EMAIL = 'entry.1251070070';
@@ -371,7 +372,7 @@ async function loadData() {
 // ページ遷移
 // =============================================
 function showPage(id) {
-    ['page-home', 'page-facilities', 'page-login', 'page-seekers'].forEach(p => {
+    ['page-home', 'page-facilities', 'page-login', 'page-seekers', 'page-seeker-areas'].forEach(p => {
         document.getElementById(p).classList.add('hidden');
     });
     document.getElementById(id).classList.remove('hidden');
@@ -843,7 +844,7 @@ function buildSeekerCard(s, idx) {
 }
 
 function sendInvitation(seekerId, btn) {
-    const url = `${FORM_INVITATION_BASE}?${ENTRY_FACILITY_ID}=${encodeURIComponent(currentFacilityId)}&${ENTRY_SEEKER_ID}=${encodeURIComponent(seekerId)}`;
+    const url = `${FORM_INVITATION_BASE}?${ENTRY_INV_FACILITY_ID}=${encodeURIComponent(currentFacilityId)}&${ENTRY_SEEKER_ID}=${encodeURIComponent(seekerId)}`;
     window.open(url, '_blank');
 }
 
