@@ -32,10 +32,10 @@
         }
         .hero-section {
             background-image:
-                linear-gradient(135deg, rgba(255, 247, 237, 0.90) 0%, rgba(254, 215, 170, 0.85) 100%),
-                url('https://user0514.cdnw.net/shared/img/thumb/roujinIMGL8123_TP_V.jpg');
+                linear-gradient(to right, rgba(255, 247, 237, 0.95) 0%, rgba(254, 215, 170, 0.85) 55%, rgba(254, 215, 170, 0.20) 100%),
+                url('fv-1.jpg');
             background-size: cover;
-            background-position: center top;
+            background-position: right center;
         }
     </style>
 </head>
@@ -615,8 +615,12 @@ function renderAreaList() {
 }
 
 // =============================================
-// 事業所リスト描画
+// 事業所リスト描画（ページネーション対応）
 // =============================================
+const ITEMS_PER_PAGE = 10;
+let currentFacilitiesData = [];
+let currentPage = 1;
+
 function renderFacilities(areaCode) {
     const loading   = document.getElementById('facilities-loading');
     const container = document.getElementById('facilities-container');
@@ -626,20 +630,71 @@ function renderFacilities(areaCode) {
     container.classList.add('hidden');
     empty.classList.add('hidden');
 
-    const filtered = facilitiesData.filter(f =>
+    currentFacilitiesData = facilitiesData.filter(f =>
         (f.area || f['エリア'] || '') === areaCode
-    ).reverse(); // 新しい順（上に表示）
+    ).reverse();
 
     loading.classList.add('hidden');
 
-    if (filtered.length === 0) {
+    if (currentFacilitiesData.length === 0) {
         empty.classList.remove('hidden');
         return;
     }
 
+    currentPage = 1;
     container.classList.remove('hidden');
-    container.innerHTML = filtered.map((f, idx) => buildFacilityCard(f, idx)).join('');
+    renderFacilitiesPage();
+}
+
+function renderFacilitiesPage() {
+    const container = document.getElementById('facilities-container');
+    const total = currentFacilitiesData.length;
+    const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end   = Math.min(start + ITEMS_PER_PAGE, total);
+    const pageItems = currentFacilitiesData.slice(start, end);
+
+    let html = pageItems.map((f, idx) => buildFacilityCard(f, start + idx)).join('');
+
+    // ページネーション UI
+    if (totalPages > 1) {
+        html += `<div class="flex items-center justify-center gap-2 mt-4 pb-2">`;
+        // 前へボタン
+        if (currentPage > 1) {
+            html += `<button onclick="goToFacilitiesPage(${currentPage - 1})"
+                class="flex items-center gap-1 px-3 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i> 前へ
+            </button>`;
+        }
+        // ページ番号
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                html += `<span class="px-3 py-2 text-sm font-bold text-white bg-orange-500 rounded-lg">${i}</span>`;
+            } else {
+                html += `<button onclick="goToFacilitiesPage(${i})"
+                    class="px-3 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">${i}</button>`;
+            }
+        }
+        // 次へボタン
+        if (currentPage < totalPages) {
+            html += `<button onclick="goToFacilitiesPage(${currentPage + 1})"
+                class="flex items-center gap-1 px-3 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                次へ <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>`;
+        }
+        html += `</div>`;
+        // 件数表示
+        html += `<p class="text-center text-xs text-slate-400 mb-2">${start + 1}〜${end}件目 / 全${total}件</p>`;
+    }
+
+    container.innerHTML = html;
     lucide.createIcons();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToFacilitiesPage(page) {
+    currentPage = page;
+    renderFacilitiesPage();
 }
 
 function buildFacilityCard(f, idx) {
