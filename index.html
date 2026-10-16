@@ -525,13 +525,11 @@ function renderEventLinks() {
         return;
     }
 
-    // バッジの色設定
     const badgeClass = {
         '無料': 'bg-green-100 text-green-700',
         '資格': 'bg-orange-100 text-orange-700'
     };
 
-    // 2件のみ → 横2列。それ以外 → 縦1列
     const isTwoCol = linksData.length === 2;
 
     if (isTwoCol) {
@@ -557,7 +555,6 @@ function buildLinkCard(link, badgeClass, isSmall) {
     const bClass   = badgeClass[badge] || 'bg-slate-100 text-slate-600';
 
     if (isSmall) {
-        // 横2列用：コンパクトカード
         return `
         <a href="${url}" target="_blank"
            class="bg-white border border-slate-200 rounded-lg p-3 flex flex-col gap-1.5 hover:bg-slate-50 transition-colors shadow-sm">
@@ -570,7 +567,6 @@ function buildLinkCard(link, badgeClass, isSmall) {
             ${date ? `<p class="text-xs text-slate-400">${date}</p>` : ''}
         </a>`;
     } else {
-        // 縦1列用：横長カード
         return `
         <a href="${url}" target="_blank"
            class="bg-white border border-slate-200 rounded-lg p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors shadow-sm">
@@ -656,17 +652,14 @@ function renderFacilitiesPage() {
 
     let html = pageItems.map((f, idx) => buildFacilityCard(f, start + idx)).join('');
 
-    // ページネーション UI
     if (totalPages > 1) {
         html += `<div class="flex items-center justify-center gap-2 mt-4 pb-2">`;
-        // 前へボタン
         if (currentPage > 1) {
             html += `<button onclick="goToFacilitiesPage(${currentPage - 1})"
                 class="flex items-center gap-1 px-3 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                 <i data-lucide="chevron-left" class="w-4 h-4"></i> 前へ
             </button>`;
         }
-        // ページ番号
         for (let i = 1; i <= totalPages; i++) {
             if (i === currentPage) {
                 html += `<span class="px-3 py-2 text-sm font-bold text-white bg-orange-500 rounded-lg">${i}</span>`;
@@ -675,7 +668,6 @@ function renderFacilitiesPage() {
                     class="px-3 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">${i}</button>`;
             }
         }
-        // 次へボタン
         if (currentPage < totalPages) {
             html += `<button onclick="goToFacilitiesPage(${currentPage + 1})"
                 class="flex items-center gap-1 px-3 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
@@ -683,7 +675,6 @@ function renderFacilitiesPage() {
             </button>`;
         }
         html += `</div>`;
-        // 件数表示
         html += `<p class="text-center text-xs text-slate-400 mb-2">${start + 1}〜${end}件目 / 全${total}件</p>`;
     }
 
@@ -821,7 +812,6 @@ function renderSeekers(areaCode) {
     setTimeout(() => {
         loading.classList.add('hidden');
 
-        // 圏域フィルタ
         const area = areas.find(a => a.code === areaCode);
         const cities = area ? area.cities.split('、') : [];
         const filtered = areaCode
@@ -898,7 +888,7 @@ function buildSeekerCard(s, idx) {
 
 function sendInvitation(seekerId, btn) {
     const url = `${FORM_INVITATION_BASE}?${ENTRY_INV_FACILITY_ID}=${encodeURIComponent(currentFacilityId)}&${ENTRY_SEEKER_ID}=${encodeURIComponent(seekerId)}`;
-    window.open(url, '_blank');
+    window.location.href = url;
 }
 
 // =============================================
@@ -950,21 +940,22 @@ async function checkAndApply() {
         const data = await res.json();
 
         if (data.found) {
-            // 登録済み → メールアドレスをフォームURLに追加して開く
+            // 登録済み → 同じタブでGoogleフォームに移動（スマホ対応）
             const url = currentApplyUrl + `&${ENTRY_SEEKER_EMAIL}=${encodeURIComponent(email)}`;
-            window.open(url, '_blank');
             closeApplyModal();
+            window.location.href = url;
         } else {
             errorEl.textContent = '登録が見つかりません。まず見学希望者登録をしてください。';
             errorEl.classList.remove('hidden');
+            btn.textContent = '確認して申込へ進む';
+            btn.disabled = false;
         }
     } catch(e) {
         errorEl.textContent = '通信エラーが発生しました。もう一度お試しください。';
         errorEl.classList.remove('hidden');
+        btn.textContent = '確認して申込へ進む';
+        btn.disabled = false;
     }
-
-    btn.textContent = '確認して申込へ進む';
-    btn.disabled = false;
 }
 
 // =============================================
