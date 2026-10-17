@@ -912,12 +912,21 @@ function closeApplyModal() {
 function showApplyStep1() {
     document.getElementById('apply-step1').classList.remove('hidden');
     document.getElementById('apply-step2').classList.add('hidden');
+    document.getElementById('apply-step3').classList.add('hidden');
 }
 
 function showApplyStep2() {
     document.getElementById('apply-step1').classList.add('hidden');
     document.getElementById('apply-step2').classList.remove('hidden');
+    document.getElementById('apply-step3').classList.add('hidden');
     document.getElementById('apply-email-input').focus();
+}
+
+function showApplyStep3() {
+    document.getElementById('apply-step1').classList.add('hidden');
+    document.getElementById('apply-step2').classList.add('hidden');
+    document.getElementById('apply-step3').classList.remove('hidden');
+    lucide.createIcons();
 }
 
 async function checkAndApply() {
@@ -940,10 +949,12 @@ async function checkAndApply() {
         const data = await res.json();
 
         if (data.found) {
-            // 登録済み → 同じタブでGoogleフォームに移動（スマホ対応）
+            // 登録済み → 「申込フォームを開く」ボタンを表示（iPhoneでも開けるよう、利用者が直接押す形にする）
             const url = currentApplyUrl + `&${ENTRY_SEEKER_EMAIL}=${encodeURIComponent(email)}`;
-            closeApplyModal();
-            window.location.href = url;
+            document.getElementById('apply-form-link').href = url;
+            btn.textContent = '確認して申込へ進む';
+            btn.disabled = false;
+            showApplyStep3();
         } else {
             errorEl.textContent = '登録が見つかりません。まず見学希望者登録をしてください。';
             errorEl.classList.remove('hidden');
@@ -1025,6 +1036,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button onclick="showApplyStep1()"
                         class="block w-full text-slate-400 hover:text-slate-600 py-2 text-sm transition-colors">
                     戻る
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP3: 確認完了・申込フォームへ -->
+        <div id="apply-step3" class="hidden">
+            <div class="text-center mb-5">
+                <div class="bg-green-100 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="check" class="w-7 h-7 text-green-600"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">登録を確認できました</h3>
+                <p class="text-sm text-slate-600">下のボタンを押して、見学申込フォームに進んでください</p>
+            </div>
+            <div class="space-y-3">
+                <a id="apply-form-link" href="#"
+                   class="block w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-center text-sm transition-colors">
+                    <i data-lucide="external-link" class="w-4 h-4 inline mr-1"></i>
+                    申込フォームを開く
+                </a>
+                <button onclick="closeApplyModal()"
+                        class="block w-full text-slate-400 hover:text-slate-600 py-2 text-sm transition-colors">
+                    キャンセル
                 </button>
             </div>
         </div>
