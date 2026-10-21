@@ -197,18 +197,18 @@
                         <i data-lucide="lock" class="w-6 h-6 text-slate-500"></i>
                     </div>
                     <h2 class="text-lg font-bold text-slate-800">事業所ログイン</h2>
-                    <p class="text-xs text-slate-500 mt-1">パスワードと事業所IDを入力してください</p>
+                    <p class="text-xs text-slate-500 mt-1">事業所IDとパスワードを入力してください</p>
                 </div>
                 <div class="space-y-3">
                     <div>
-                        <label class="text-xs text-slate-500 mb-1 block">パスワード</label>
-                        <input type="password" id="password-input" placeholder="パスワードを入力"
+                        <label class="text-xs text-slate-500 mb-1 block">事業所ID（登録完了メールに記載）</label>
+                        <input type="text" id="facility-id-input" placeholder="例：F-XXXX"
                                class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
                                onkeydown="if(event.key==='Enter')checkPassword()">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-500 mb-1 block">事業所ID（登録完了メールに記載）</label>
-                        <input type="text" id="facility-id-input" placeholder="例：F-XXXX"
+                        <label class="text-xs text-slate-500 mb-1 block">パスワード</label>
+                        <input type="password" id="password-input" placeholder="パスワードを入力"
                                class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
                                onkeydown="if(event.key==='Enter')checkPassword()">
                     </div>
@@ -409,7 +409,7 @@ async function checkPassword() {
     const btn        = document.getElementById('login-btn');
 
     if (!password || !facilityId) {
-        errorEl.textContent = 'パスワードと事業所IDを両方入力してください';
+        errorEl.textContent = '事業所IDとパスワードを両方入力してください';
         errorEl.classList.remove('hidden');
         return;
     }
@@ -650,7 +650,15 @@ function renderFacilitiesPage() {
     const end   = Math.min(start + ITEMS_PER_PAGE, total);
     const pageItems = currentFacilitiesData.slice(start, end);
 
-    let html = pageItems.map((f, idx) => buildFacilityCard(f, start + idx)).join('');
+    // 1件の表示でつまずいても、ほかの事業所は表示を続ける
+    let html = pageItems.map((f, idx) => {
+        try {
+            return buildFacilityCard(f, start + idx);
+        } catch (e) {
+            console.error('事業所カードの表示に失敗しました', f && f.id, e);
+            return '';
+        }
+    }).join('');
 
     if (totalPages > 1) {
         html += `<div class="flex items-center justify-center gap-2 mt-4 pb-2">`;
@@ -755,7 +763,7 @@ function buildDetailInfo(f) {
     const hoursPerDay = f.hoursPerDay || '';
     const workHours   = f.workHours || '';
     const staff       = f.staff || '';
-    const phone       = f.phone || '';
+    const phone       = formatPhone(f.phone);
     const internship  = f.internship || '';
     const comment     = f.comment || '';
     const mapUrl      = f.mapUrl || '';
@@ -774,6 +782,14 @@ function buildDetailInfo(f) {
     if (mapUrl)      html += `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapUrl)}" target="_blank" class="flex items-center gap-1.5 text-sm text-blue-500 hover:underline"><i data-lucide="map" class="w-3.5 h-3.5"></i>Googleマップで見る</a>`;
     html += '</div>';
     return html;
+}
+
+// 電話番号を文字として扱う（スプレッドシートで数字になり先頭の0が消えた場合は補う）
+function formatPhone(value) {
+    if (value === null || value === undefined || value === '') return '';
+    let s = String(value).trim();
+    if (/^[1-9]\d{8,9}$/.test(s)) s = '0' + s;
+    return s;
 }
 
 function buildApplicationUrl(facilityId, facilityName) {
